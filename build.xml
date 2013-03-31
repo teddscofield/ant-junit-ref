@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="class-file-parser" default="dist" basedir=".">
+  <description>
+    Class file parser project
+  </description>
+
+  <!-- 
+    PROPERTIES
+   -->
+
+  <!-- source directories -->
+  <property name="src-app" location="src/main/java" />
+  <property name="src-test" location="src/test/java" />
+
+  <!-- jar directories -->
+  <property name="lib-test" location="src/test/resources/lib" />
+
+  <!-- working build directories -->
+  <property name="build" location="build" />
+  <property name="build-app" location="build/compile/classes" />
+  <property name="build-test" location="build/compile/test-classes" />
+  <property name="build-reports" location="build/reports" />
+
+  <!-- build artifacts directory -->
+  <property name="dist" location="dist" />
+
+  <!-- 
+    PATHS
+   -->
+
+  <!-- class path needed to compile the app -->
+  <path id="app.classpath">
+    <pathelement location="${build-app}" />
+  </path>
+
+  <!-- class path needed to compile the unit tests -->
+  <path id="test.classpath">
+    <path refid="app.classpath" />
+    <pathelement location="${build-test}" />
+    <fileset dir="${lib-test}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path>
+
+  <!--
+    TARGETS
+   -->
+
+  <!-- clean up target -->
+  <target name="clean" description="-- clean up">
+    <delete dir="${build}" />
+    <delete dir="${dist}" />
+  </target>
+
+  <!-- build initialization target -->
+  <target name="init"
+          depends="clean"
+          description="-- initialize the build">
+    
+    <tstamp>
+      <format property="build.time" pattern="yyyyMMdd-HHmmss" />
+    </tstamp>
+
+    <mkdir dir="${build-app}" />
+    <mkdir dir="${build-test}" />
+    <mkdir dir="${build-reports}" />
+  </target>
+
+  <!-- compile app source target -->
+  <target name="compile"
+          depends="init"
+          description="-- compile the app source">
+
+    <javac includeantruntime="false"
+           srcdir="${src-app}"
+           destdir="${build-app}" />
+  </target>
+
+  <!-- compile unit test source target -->
+  <target name="compile-tests"
+          depends="init,compile"
+          description="-- compile the test sources">
+
+    <javac includeantruntime="false"
+           srcdir="${src-test}"
+           destdir="${build-test}">
+      <classpath refid="test.classpath" />
+    </javac>
+  </target>
+
+  <!-- execute unit tests target -->
+  <target name="unit-test"
+          depends="compile-tests"
+          description="-- execute unit tests">
+
+    <junit printsummary="yes" haltonfailure="yes" showoutput="yes">
+      <classpath refid="test.classpath" />
+      <batchtest fork="no" todir="${build-reports}">
+        <formatter type="plain" />
+        <fileset dir="${src-test}">
+          <include name="**/*Test.java" />
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+  <!-- create finished distribution target -->
+  <target name="dist"
+          depends="unit-test"
+          description="-- generate the distribution">
+
+    <mkdir dir="${dist}/lib" />
+
+    <jar jarfile="${dist}/lib/${ant.project.name}-${build.time}.jar"
+         basedir="${build-app}" />
+  </target>
+
+  <!-- no-op target, simply to make ant -p more readable -->
+  <target name="z" description="&#10;" />
+</project>
